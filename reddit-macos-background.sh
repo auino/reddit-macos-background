@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# 
+# reddit-macos-background
+# Author: Enrico Cambiaso
+# Email: enrico.cambiaso[at]gmail.com
+# GitHub project URL: https://github.com/auino/reddit-macos-background
+# 
+
+# --- --- --- --- ---
+# CONFIGURATION BEGIN
+# --- --- --- --- ---
+
+# subreddit name
+SUBREDDIT="EarthPorn"
+
+# set to 0 if you want to use (also) portrait photos as background
+ONLY_LANDSCAPE_MODE=1
+
+# script directory (without final '/' slash)
+DIR="/tmp"
+
+# desired resolution
+RESOLUTION="1920x1080"
+
+# images of a specific user
+FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=on"
+
+# adopted user agent
+USERAGENT="Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
+
+# --- --- --- --- ---
+#  CONFIGURATION END
+# --- --- --- --- ---
+
+# getting feed from Reddit
+curl -s -L -A "$USERAGENT" "$FEED"|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e 's/&gt;/>/g'|sed -e 's/&quot;/"/g'|tr ' ' '\n'|grep href|grep "jpg"|awk -F'"' '{print $2}' > $DIR/reddit_list.txt
+
+# getting elements count
+COUNT=`cat $DIR/reddit_list.txt|wc -l|awk '{print $1}'`
+
+# cycling until a "good" image if found
+FOUND=0
+for i in $(seq 1 $COUNT); do
+	# printing basic information
+	echo "Getting image"
+
+	# getting a random element index
+	RND=`expr $RANDOM % $COUNT`
+
+	# getting the image url from index
+	IMG=`cat $DIR/reddit_list.txt|tail -n +$RND|head -n 1`
+
+	# getting image data from url
+	echo $IMG
+	curl -s "$IMG" -o $DIR/reddit_img.png
+
+	# getting image dimensions
+	IMG_W=`sips -g pixelWidth $DIR/reddit_img.png|tail -n 1|awk '{print $2}'`
+	IMG_H=`sips -g pixelHeight $DIR/reddit_img.png|tail -n 1|awk '{print $2}'`
+	echo "Image size is ${IMG_W} x ${IMG_H}"
+
+	# checking if image is "good"
+	if [ ! $ONLY_LANDSCAPE_MODE ] || [ $IMG_W -gt $IMG_H ]; then
+		FOUND=1
+		break
+	fi
+done
+
+if [ $FOUND ]; then
+	# setting image as background
+	echo "Setting downloaded image as background"
+
+	osascript -e 'tell application "System Events"
+		set desktopCount to count of desktops
+		repeat with desktopNumber from 1 to desktopCount
+			tell desktop desktopNumber
+				set picture to "'$DIR'/reddit_img.png"
+			end tell
+		end repeat
+	end tell'
+
+	killall Dock
+else
+	echo "No image found"
+fi
