@@ -43,7 +43,7 @@ MD5COMMAND=md5
 # --- --- --- --- ---
 
 # getting feed from Reddit
-#curl -s -L -A "$USERAGENT" "$FEED"|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e 's/&gt;/>/g'|sed -e 's/&quot;/"/g'|tr ' ' '\n'|grep href|grep "jpg"|awk -F'"' '{print $2}' > $DIR/reddit_list.txt
+curl -s -L -A "$USERAGENT" "$FEED"|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e 's/&gt;/>/g'|sed -e 's/&quot;/"/g'|tr ' ' '\n'|grep href|grep "jpg"|awk -F'"' '{print $2}' > $DIR/reddit_list.txt
 
 # checking if batch download is configured or not
 if [ $BATCH_DOWNLOAD -gt 0 ]; then
