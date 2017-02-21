@@ -52,22 +52,21 @@ if [ $BATCH_DOWNLOAD -gt 0 ]; then
 	# cycling over all found images
 	for IMG in $(cat $TMPDIR/reddit_list.txt); do
 		# printing basic information
-		echo "Getting image"
+		echo "Getting image: $IMG"
 		# getting image data from url
-		echo $IMG
 		curl -s "$IMG" -o $TMPDIR/reddit_img.png
 		# getting image dimensions
 		IMG_W=`sips -g pixelWidth $TMPDIR/reddit_img.png|tail -n 1|awk '{print $2}'`
 		IMG_H=`sips -g pixelHeight $TMPDIR/reddit_img.png|tail -n 1|awk '{print $2}'`
 		echo "Image size is ${IMG_W} x ${IMG_H}"
 		# checking if image is "good"
-		if [ ! $ONLY_LANDSCAPE_MODE ] || [ $IMG_W -gt $IMG_H ]; then continue ; fi
+		if [ $ONLY_LANDSCAPE_MODE ] && [ $IMG_W -le $IMG_H ]; then continue ; fi
 		# checking if images is already saved
 		MD5=`$MD5COMMAND $TMPDIR/reddit_img.png|awk '{print $4}'`
 		FOUND=`$MD5COMMAND $DOWNLOAD_DIR/*|grep $MD5|wc -l|awk '{print $1}'`
-		if [ $FOUND -le 0 ]; then
-			mv $TMPDIR/reddit_img.png $DOWNLOAD_DIR/$MD5.png
-		fi
+		if [ $FOUND -gt 0 ]; then echo "Skipped!" ; continue ; fi
+		echo "Saving..."
+		mv "$TMPDIR/reddit_img.png" "$DOWNLOAD_DIR/$MD5.png"
 	done
 	exit 0
 fi
