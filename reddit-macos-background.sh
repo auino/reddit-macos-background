@@ -23,8 +23,11 @@ TMPDIR="/tmp"
 # desired resolution
 RESOLUTION="1920x1080"
 
+# restrict results ('on') or not ('off')
+RESTRICT=off
+
 # images of a specific user
-FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=on"
+FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=${RESTRICT}&sort=new"
 
 # adopted user agent
 USERAGENT="Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
@@ -43,7 +46,8 @@ MD5COMMAND=md5
 # --- --- --- --- ---
 
 # getting feed from Reddit
-curl -s -L -A "$USERAGENT" "$FEED"|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e 's/&gt;/>/g'|sed -e 's/&quot;/"/g'|tr ' ' '\n'|grep href|grep "jpg"|awk -F'"' '{print $2}' > $TMPDIR/reddit_list.txt
+curl -s -L -A "$USERAGENT" "$FEED" > $TMPDIR/reddit_data.rss
+cat $TMPDIR/reddit_data.rss|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e 's/&gt;/>/g'|sed -e 's/&quot;/"/g'|tr ' ' '\n'|grep href|grep "jpg"|awk -F'"' '{print $2}' > $TMPDIR/reddit_list.txt
 
 # checking if batch download is configured or not
 if [ $BATCH_DOWNLOAD -gt 0 ]; then
