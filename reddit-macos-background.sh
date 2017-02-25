@@ -23,7 +23,7 @@ TMPDIR="/tmp"
 # desired resolution
 DESKTOP_WIDTH=`system_profiler SPDisplaysDataType |grep Resolution|awk '{print $2}'`
 DESKTOP_HEIGHT=`system_profiler SPDisplaysDataType |grep Resolution|awk '{print $4}'`
-RESOLUTION="${DESKTOP_WIDTH}x${DESKTOP_HEIGHT}"
+DESKTOP_RESOLUTION="${DESKTOP_WIDTH}x${DESKTOP_HEIGHT}"
 
 # keep current dekstop resolution aspect ratio (1) or not (0)?
 KEEP_ASPECT_RATIO=0
@@ -40,7 +40,7 @@ RESTRICT=off
 # images of a specific user
 #FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=${RESTRICT}&sort=new"
 Q='x' # generic string including several different resolutions
-if [ $ONLY_SAME_RESOLUTION ]; then Q=$RESOLUTION ; fi
+if [ $ONLY_SAME_RESOLUTION ]; then Q=$DESKTOP_RESOLUTION ; fi
 FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=$Q&restrict_sr=${RESTRICT}&sort=new"
 
 # adopted user agent
