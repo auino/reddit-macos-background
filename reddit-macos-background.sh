@@ -21,13 +21,27 @@ ONLY_LANDSCAPE_MODE=1
 TMPDIR="/tmp"
 
 # desired resolution
-RESOLUTION="1920x1080"
+DESKTOP_WIDTH=`system_profiler SPDisplaysDataType |grep Resolution|awk '{print $2}'`
+DESKTOP_HEIGHT=`system_profiler SPDisplaysDataType |grep Resolution|awk '{print $4}'`
+RESOLUTION="${DESKTOP_WIDTH}x${DESKTOP_HEIGHT}"
+
+# keep current dekstop resolution aspect ratio (1) or not (0)?
+KEEP_ASPECT_RATIO=0
+
+# only search for same resolution images (1) or not (0)?
+ONLY_SAME_RESOLUTION=0
+
+# ignore low resolution images (1) or not (0)?
+IGNORE_LOWRES_IMAGES=1
 
 # restrict results ('on') or not ('off')
 RESTRICT=off
 
 # images of a specific user
-FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=${RESTRICT}&sort=new"
+#FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=${RESTRICT}&sort=new"
+Q='x' # generic string including several different resolutions
+if [ $ONLY_SAME_RESOLUTION ]; then Q=$RESOLUTION ; fi
+FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=$Q&restrict_sr=${RESTRICT}&sort=new"
 
 # adopted user agent
 USERAGENT="Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
@@ -53,6 +67,10 @@ cat $TMPDIR/reddit_data.rss|tr '<' '\n'|tr '>' '\n'|sed -e 's/&lt;/</g'|sed -e '
 if [ $BATCH_DOWNLOAD -gt 0 ]; then
 	# creating download directory, if needed
 	mkdir "$DOWNLOAD_DIR" 2> /dev/null
+	# calculating desired aspect ratio
+	F=1000
+	DESKTOP_ASPECT_RATIO=`expr $DESKTOP_WIDTH \* $F / $DESKTOP_HEIGHT`
+	echo "Desktop resolution is $DESKTOP_WIDTH x $DESKTOP_HEIGHT"
 	# cycling over all found images
 	for IMG in $(cat $TMPDIR/reddit_list.txt); do
 		# printing basic information
@@ -62,13 +80,24 @@ if [ $BATCH_DOWNLOAD -gt 0 ]; then
 		# getting image dimensions
 		IMG_W=`sips -g pixelWidth $TMPDIR/reddit_img.png|tail -n 1|awk '{print $2}'`
 		IMG_H=`sips -g pixelHeight $TMPDIR/reddit_img.png|tail -n 1|awk '{print $2}'`
-		echo "Image size is ${IMG_W} x ${IMG_H}"
-		# checking if image is "good"
-		if [ $ONLY_LANDSCAPE_MODE ] && [ $IMG_W -le $IMG_H ]; then continue ; fi
+		#echo "Image size is ${IMG_W} x ${IMG_H}"
+		# checking resolution
+		if [ $ONLY_SAME_RESOLUTION -gt 0 ]; then
+			if [ $IMG_W -ne $DESKTOP_WIDTH ] || [ $IMG_H -ne $DESKTOP_HEIGHT ]; then continue; fi
+		fi
+		# checking image quality
+		if [ $IGNORE_LOWRES_IMAGES -gt 0 ]; then
+			if [ $IMG_W -lt $DESKTOP_WIDTH ] || [ $IMG_H -lt $DESKTOP_HEIGHT ]; then continue; fi
+		fi
+		# checking aspect ratio, if needed
+		IMG_ASPECT_RATIO=`expr $IMG_W \* $F / $IMG_H`
+		if [ $KEEP_ASPECT_RATIO -gt 0 ] && [ $DESKTOP_ASPECT_RATIO -ne $IMG_ASPECT_RATIO ]; then continue ; fi
+		# checking if image shot mode is "good"
+		if [ $ONLY_LANDSCAPE_MODE -gt 0 ] && [ $IMG_W -le $IMG_H ]; then continue ; fi
 		# checking if images is already saved
 		MD5=`$MD5COMMAND $TMPDIR/reddit_img.png|awk '{print $4}'`
 		FOUND=`$MD5COMMAND $DOWNLOAD_DIR/*|grep $MD5|wc -l|awk '{print $1}'`
-		if [ $FOUND -gt 0 ]; then echo "Skipped!" ; continue ; fi
+		if [ $FOUND -gt 0 ]; then continue ; fi
 		echo "Saving..."
 		mv "$TMPDIR/reddit_img.png" "$DOWNLOAD_DIR/$MD5.png"
 	done
