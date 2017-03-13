@@ -96,10 +96,11 @@ if [ $BATCH_DOWNLOAD -gt 0 ]; then
 		if [ $ONLY_LANDSCAPE_MODE -gt 0 ] && [ $IMG_W -le $IMG_H ]; then continue ; fi
 		# checking if images is already saved
 		MD5=`$MD5COMMAND $TMPDIR/reddit_img.png|awk '{print $4}'`
-		FOUND=`$MD5COMMAND $DOWNLOAD_DIR/*|grep $MD5|wc -l|awk '{print $1}'`
+		FOUND=`cat $DOWNLOAD_DIR/.allimages.txt|grep $MD5|wc -l|awk '{print $1}'`
 		if [ $FOUND -gt 0 ]; then continue ; fi
 		echo "Saving..."
 		mv "$TMPDIR/reddit_img.png" "$DOWNLOAD_DIR/$MD5.png"
+		echo "$MD5" >> "$DOWNLOAD_DIR/.allimages.txt"
 	done
 	exit 0
 fi
