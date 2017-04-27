@@ -37,8 +37,11 @@ IGNORE_LOWRES_IMAGES=1
 # restrict results ('on') or not ('off')
 RESTRICT=off
 
+# operating system identification
+MACOS=0
+if [ "$(uname)" == "Darwin" ]; then MACOS=1 ; fi
+
 # images of a specific user
-#FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=${RESOLUTION}&restrict_sr=${RESTRICT}&sort=new"
 Q='x' # generic string including several different resolutions
 if [ $ONLY_SAME_RESOLUTION ]; then Q=$DESKTOP_RESOLUTION ; fi
 FEED="http://www.reddit.com/r/${SUBREDDIT}/search.rss?q=$Q&restrict_sr=${RESTRICT}&sort=new"
@@ -140,16 +143,20 @@ if [ $FOUND ]; then
 	# setting image as background
 	echo "Setting downloaded image as background"
 
-	osascript -e 'tell application "System Events"
-		set desktopCount to count of desktops
-		repeat with desktopNumber from 1 to desktopCount
-			tell desktop desktopNumber
-				set picture to "'$TMPDIR'/reddit_img.png"
-			end tell
-		end repeat
-	end tell'
-
-	killall Dock
+	if [ $MACOS -gt 0 ]; then
+		osascript -e 'tell application "System Events"
+			set desktopCount to count of desktops
+			repeat with desktopNumber from 1 to desktopCount
+				tell desktop desktopNumber
+					set picture to "'$TMPDIR'/reddit_img.png"
+				end tell
+			end repeat
+		end tell'
+		killall Dock
+	else
+		# works on Gnome
+		gsettings set org.gnome.desktop.background picture-uri "file://$TMPDIR/reddit_img.png"
+	fi
 else
 	echo "No image found"
 fi
