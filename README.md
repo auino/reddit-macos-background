@@ -1,8 +1,5 @@
 # reddit-macos-background
-Easily set Reddit pictures from a specific subreddit as background for your macOS host
-
-
-Easily set your Mac background to a random image on 500px website
+Easily set Reddit pictures from a specific subreddit as desktop background for your machine
 
 ### Description ###
 
