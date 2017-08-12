@@ -144,15 +144,7 @@ if [ $FOUND ]; then
 	echo "Setting downloaded image as background"
 
 	if [ $MACOS -gt 0 ]; then
-		osascript -e 'tell application "System Events"
-			set desktopCount to count of desktops
-			repeat with desktopNumber from 1 to desktopCount
-				tell desktop desktopNumber
-					set picture to "'$TMPDIR'/reddit_img.png"
-				end tell
-			end repeat
-		end tell'
-		killall Dock
+		osascript -e 'tell application "System Events" to set picture of every desktop to ("'$DIR'/reddit_img.png" as POSIX file as alias)'
 	else
 		# works on Gnome
 		gsettings set org.gnome.desktop.background picture-uri "file://$TMPDIR/reddit_img.png"
